@@ -22,16 +22,15 @@
         const data = Papa.parse(csvText, { header: true }).data;
         const container = document.getElementById("fileList");
 
-        // Cek kalau sheet kosong
         if(!data || data.length === 0) {
           container.innerText = "No files found.";
           return;
         }
 
-        // Tampilkan file sebagai link
+        // Ambil kolom 'url' aja
         container.innerHTML = data.map(item => {
-          if(item.file_link) { // pastikan ada link
-            return `<a href="${item.file_link}" target="_blank">${item.filename || "Unnamed File"}</a>`;
+          if(item.url) { // pastikan kolom 'url' ada
+            return `<a href="${item.url}" target="_blank">${item.url}</a>`;
           } else {
             return "";
           }
