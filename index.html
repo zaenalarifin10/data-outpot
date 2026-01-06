@@ -5,13 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Daftar File Dropbox</title>
 <style>
-body {font-family: Arial; background:#f5f6fa; padding:20px;}
+body {font-family: Arial, sans-serif; background:#f5f6fa; padding:20px;}
 .container {max-width:700px; margin:0 auto;}
 h2{text-align:center; margin-bottom:20px;}
 ul {list-style:none; padding:0;}
 li {background:white; margin:10px 0; padding:15px; border-radius:8px; box-shadow:0 4px 10px rgba(0,0,0,0.1);}
 a {text-decoration:none; color:#4cd137; font-weight:600;}
 a:hover {text-decoration:underline;}
+.loading {text-align:center; color:#888;}
 </style>
 </head>
 <body>
@@ -19,33 +20,36 @@ a:hover {text-decoration:underline;}
 <div class="container">
   <h2>Daftar File Dropbox</h2>
   <ul id="fileList">
-    <li>Loading...</li>
+    <li class="loading">Loading...</li>
   </ul>
 </div>
 
 <script>
 // ------------------- LIST FILE -------------------
 const fileList = document.getElementById('fileList');
+const listWebhook = 'https://hook.eu2.make.com/dsi6b4x5khpfpabedjjb5x1dwwtfri75';
 
 async function fetchFiles(){
-  const listWebhook = 'https://hook.eu2.make.com/jaaqeap7089hdo33jrjny5h8ydivrcfn'; // ganti dengan webhook list file Dropbox dari scenario baru Make.com
-  fileList.innerHTML = '<li>Loading...</li>';
+  fileList.innerHTML = '<li class="loading">Loading...</li>';
   try{
     const res = await fetch(listWebhook);
+    if(!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
     const data = await res.json();
+
     fileList.innerHTML = '';
-    if(data.length === 0){
-      fileList.innerHTML = '<li>Belum ada file.</li>';
+    if(!data || data.length === 0){
+      fileList.innerHTML = '<li class="loading">Belum ada file.</li>';
       return;
     }
+
     data.forEach(file=>{
       const li = document.createElement('li');
       li.innerHTML = `<a href="${file.url}" target="_blank">${file.name}</a>`;
       fileList.appendChild(li);
     });
   } catch(err){
-    fileList.innerHTML = '<li>Error memuat file.</li>';
     console.error(err);
+    fileList.innerHTML = `<li class="loading">Error memuat file.</li>`;
   }
 }
 
