@@ -1,69 +1,64 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>List Dropbox Files</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
-  <style>
-    body { font-family: sans-serif; padding: 20px; }
-    .file-item { margin-bottom: 20px; }
-    .file-item a { display: inline-block; margin-right: 10px; color: blue; text-decoration: underline; }
-    iframe { width: 100%; height: 400px; border: 1px solid #ccc; margin-top: 5px; display: none; }
-  </style>
+<meta charset="UTF-8">
+<title>Dropbox Sheet Preview</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<style>
+  body { font-family: sans-serif; padding: 20px; }
+  .file-item { margin-bottom: 25px; }
+  button { margin-right: 10px; }
+  iframe { width: 100%; height: 400px; border: 1px solid #ccc; display: none; margin-top: 10px; }
+</style>
 </head>
 <body>
-  <h2>Dropbox File List</h2>
-  <div id="fileList">Loading...</div>
 
-  <script>
-    const sheetURL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS4LebC36zQ_LbyRlp5qw3EOiwAx5FBR5gdyst-qNVwjQL1d9DOP6KI5qZ4r-9vrn6Hg09s4LLukTyx/pub?gid=0&single=true&output=csv";
+<h2>Dropbox Files from Sheet</h2>
+<div id="fileList">Loading...</div>
 
-    fetch(sheetURL)
-      .then(response => response.text())
-      .then(csvText => {
-        const data = Papa.parse(csvText, { header: true }).data;
-        const container = document.getElementById("fileList");
+<script>
+const sheetURL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS4LebC36zQ_LbyRlp5qw3EOiwAx5FBR5gdyst-qNVwjQL1d9DOP6KI5qZ4r-9vrn6Hg09s4LLukTyx/pub?gid=0&single=true&output=csv";
 
-        if(!data || data.length === 0) {
-          container.innerText = "No files found.";
-          return;
-        }
+fetch(sheetURL)
+  .then(res => res.text())
+  .then(csvText => {
+    const data = Papa.parse(csvText, { header: true }).data;
+    const container = document.getElementById("fileList");
 
-        container.innerHTML = data.map((item, index) => {
-          if(!item.url) return "";
-
-          // Ubah link Dropbox menjadi mode view
-          let viewURL = item.url.replace("www.dropbox.com", "dl.dropboxusercontent.com").replace("?dl=0", "");
-
-          return `
-            <div class="file-item">
-              <strong>File ${index + 1}</strong><br>
-              <a href="${viewURL}" target="_blank">Open in new tab</a>
-              <button onclick="previewFile('preview-${index}')">Preview</button>
-              <button onclick="downloadFile('${viewURL}')">Download</button>
-              <iframe id="preview-${index}" src="${viewURL}"></iframe>
-            </div>
-          `;
-        }).join("");
-      })
-      .catch(err => {
-        console.error("Error fetching sheet:", err);
-        document.getElementById("fileList").innerText = "Failed to load files.";
-      });
-
-    function previewFile(iframeId) {
-      const iframe = document.getElementById(iframeId);
-      iframe.style.display = iframe.style.display === "block" ? "none" : "block";
+    if(!data || data.length === 0){
+      container.innerText = "No files found.";
+      return;
     }
 
-    function downloadFile(url) {
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = '';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-    }
-  </script>
+    container.innerHTML = data.map((item, index) => {
+      if(!item.url) return "";
+
+      // Tambahkan ?dl=1 untuk download
+      const downloadURL = item.url.replace(/(\?dl=0|$)/, '?dl=1');
+
+      // Pakai Google Docs Viewer untuk preview
+      const previewURL = `https://docs.google.com/gview?url=${encodeURIComponent(downloadURL)}&embedded=true`;
+
+      return `
+        <div class="file-item">
+          <strong>File ${index + 1}</strong><br>
+          <button onclick="togglePreview('iframe-${index}')">Preview</button>
+          <button onclick="window.open('${downloadURL}', '_blank')">Download</button>
+          <iframe id="iframe-${index}" src="${previewURL}"></iframe>
+        </div>
+      `;
+    }).join("");
+  })
+  .catch(err => {
+    console.error(err);
+    document.getElementById("fileList").innerText = "Failed to load files.";
+  });
+
+function togglePreview(id){
+  const iframe = document.getElementById(id);
+  iframe.style.display = iframe.style.display === "block" ? "none" : "block";
+}
+</script>
+
 </body>
 </html>
