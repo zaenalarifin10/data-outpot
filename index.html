@@ -1,61 +1,46 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Daftar File Dropbox</title>
-<style>
-body {font-family: Arial, sans-serif; background:#f5f6fa; padding:20px;}
-.container {max-width:700px; margin:0 auto;}
-h2{text-align:center; margin-bottom:20px;}
-ul {list-style:none; padding:0;}
-li {background:white; margin:10px 0; padding:15px; border-radius:8px; box-shadow:0 4px 10px rgba(0,0,0,0.1);}
-a {text-decoration:none; color:#4cd137; font-weight:600;}
-a:hover {text-decoration:underline;}
-.loading {text-align:center; color:#888;}
-</style>
+  <meta charset="UTF-8">
+  <title>List Dropbox Files</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    a { display: block; margin: 5px 0; color: blue; text-decoration: underline; }
+  </style>
 </head>
 <body>
+  <h2>Dropbox File List</h2>
+  <div id="fileList">Loading...</div>
 
-<div class="container">
-  <h2>Daftar File Dropbox</h2>
-  <ul id="fileList">
-    <li class="loading">Loading...</li>
-  </ul>
-</div>
+  <script>
+    const sheetURL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS4LebC36zQ_LbyRlp5qw3EOiwAx5FBR5gdyst-qNVwjQL1d9DOP6KI5qZ4r-9vrn6Hg09s4LLukTyx/pub?gid=0&single=true&output=csv";
 
-<script>
-// ------------------- LIST FILE -------------------
-const fileList = document.getElementById('fileList');
-const listWebhook = 'https://hook.eu2.make.com/dsi6b4x5khpfpabedjjb5x1dwwtfri75';
+    fetch(sheetURL)
+      .then(response => response.text())
+      .then(csvText => {
+        const data = Papa.parse(csvText, { header: true }).data;
+        const container = document.getElementById("fileList");
 
-async function fetchFiles(){
-  fileList.innerHTML = '<li class="loading">Loading...</li>';
-  try{
-    const res = await fetch(listWebhook);
-    if(!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-    const data = await res.json();
+        // Cek kalau sheet kosong
+        if(!data || data.length === 0) {
+          container.innerText = "No files found.";
+          return;
+        }
 
-    fileList.innerHTML = '';
-    if(!data || data.length === 0){
-      fileList.innerHTML = '<li class="loading">Belum ada file.</li>';
-      return;
-    }
-
-    data.forEach(file=>{
-      const li = document.createElement('li');
-      li.innerHTML = `<a href="${file.url}" target="_blank">${file.name}</a>`;
-      fileList.appendChild(li);
-    });
-  } catch(err){
-    console.error(err);
-    fileList.innerHTML = `<li class="loading">Error memuat file.</li>`;
-  }
-}
-
-// fetch file saat page load
-fetchFiles();
-</script>
-
+        // Tampilkan file sebagai link
+        container.innerHTML = data.map(item => {
+          if(item.file_link) { // pastikan ada link
+            return `<a href="${item.file_link}" target="_blank">${item.filename || "Unnamed File"}</a>`;
+          } else {
+            return "";
+          }
+        }).join("");
+      })
+      .catch(err => {
+        console.error("Error fetching sheet:", err);
+        document.getElementById("fileList").innerText = "Failed to load files.";
+      });
+  </script>
 </body>
 </html>
